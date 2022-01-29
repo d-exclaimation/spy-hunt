@@ -16,9 +16,9 @@ const Card: React.FC<Props> = ({ seed, isTargeted }) => {
   const isOpen = !!seed;
   return (
     <div
-      className={`flex flex-col bg-white ${
+      className={`flex flex-col ${
         isOpen ? "bg-white" : "bg-slate-700"
-      } rounded-lg shadow-md  select-none active:shadow-xl`}
+      } rounded-lg shadow-md select-none active:shadow-xl`}
     >
       {isOpen ? (
         <img
