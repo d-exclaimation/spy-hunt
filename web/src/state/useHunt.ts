@@ -5,6 +5,7 @@
 //  Created by d-exclaimation on 16:36.
 //
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { v4 } from "uuid";
 import { shuffled } from "../utils/shuffle";
 
 const PLACEHOLDER: Record<number, string> = {
@@ -18,25 +19,37 @@ type Window = {
   isTargeted: boolean;
 };
 
+type Agent = {
+  team: string;
+  key: string;
+};
+
+const newNeutral = (): Agent => ({
+  team: PLACEHOLDER[0],
+  key: v4(),
+});
+
 export function useHunt() {
   // MARK: --- States ---
 
-  const [deck, setDeck] = useState<string[]>([]);
-  const [queue, setQueue] = useState<string[]>([]);
+  const [deck, setDeck] = useState<Agent[]>([]);
+  const [queue, setQueue] = useState<Agent[]>([]);
   const [windows, setWindows] = useState<Window[]>([]);
 
   const state = useMemo(
-    () => queue.map((team, i) => ({ team, ...windows[i] })),
+    () => queue.map((team, i) => ({ ...team, ...windows[i] })),
     [queue, windows]
   );
 
   const allies = useMemo(
-    () => [...deck, ...queue].filter((team) => team === PLACEHOLDER[1]).length,
+    () =>
+      [...deck, ...queue].filter(({ team }) => team === PLACEHOLDER[1]).length,
     [deck, queue]
   );
 
   const foes = useMemo(
-    () => [...deck, ...queue].filter((team) => team === PLACEHOLDER[1]).length,
+    () =>
+      [...deck, ...queue].filter(({ team }) => team === PLACEHOLDER[2]).length,
     [deck, queue]
   );
 
@@ -44,10 +57,20 @@ export function useHunt() {
    * Initial State
    */
   useEffect(() => {
-    const [_0, _1, _2, _3, _4, ...initial] = shuffled([
-      ...Array(20).fill(PLACEHOLDER[0]),
-      ...Array(20).fill(PLACEHOLDER[1]),
-      ...Array(20).fill(PLACEHOLDER[2]),
+    const neutral = Array<string>(20)
+      .fill(PLACEHOLDER[0])
+      .map((team, i) => ({ team, key: v4() }));
+    const allies = Array<string>(20)
+      .fill(PLACEHOLDER[1])
+      .map((team: string, i) => ({ team, key: v4() }));
+    const foes = Array<string>(20)
+      .fill(PLACEHOLDER[2])
+      .map((team: string, i) => ({ team, key: v4() }));
+
+    const [_0, _1, _2, _3, _4, ...initial] = shuffled<Agent>([
+      ...allies,
+      ...foes,
+      ...neutral,
     ]);
 
     setDeck(initial);
@@ -67,20 +90,12 @@ export function useHunt() {
    * Forward the progress of the queue in front of the windows
    */
   const next = useCallback(() => {
-    setQueue((prev) => {
-      const [removed, ...stays] = prev.reverse();
+    const [removed, ...stays] = queue.reverse();
+    const [next, ...remains] = !!deck.length ? deck : [newNeutral()];
 
-      if (!deck.length) {
-        setDeck([removed]);
-        return [...stays, PLACEHOLDER[0]].reverse();
-      }
-
-      const [next, ...remains] = deck;
-      setDeck([...remains, removed]);
-
-      return [...stays, next].reverse();
-    });
-  }, [deck, setDeck, setQueue]);
+    setDeck([...remains, removed]);
+    setQueue([...stays, next].reverse());
+  }, [deck, queue, setDeck, setQueue]);
 
   /**
    * Target a certain window
@@ -110,6 +125,10 @@ export function useHunt() {
     (i: number) => {
       if (i < 0 || i > 4 || !windows[i].isTargeted) return;
 
+      /// Get the next agent from deck
+      const [next, ...rest] = !!deck.length ? deck : [newNeutral()];
+      setDeck(rest);
+
       // Remove marking
       setWindows((previousWindows) =>
         previousWindows.map((prev, j) => ({
@@ -120,16 +139,7 @@ export function useHunt() {
       );
 
       // Remove agent
-      setQueue((prev) => {
-        const left = prev.filter((_, j) => i !== j);
-        if (!deck.length) {
-          return [PLACEHOLDER[0], ...left];
-        }
-
-        const [next, ...rest] = deck;
-        setDeck(rest);
-        return [next, ...left];
-      });
+      setQueue((prev) => [next, ...prev.filter((_, j) => i !== j)]);
     },
     [setQueue, setWindows, setDeck, windows, deck]
   );
@@ -143,22 +153,15 @@ export function useHunt() {
     (i: number) => {
       if (i < 0 || i > 4) return;
 
-      setQueue((prev) => {
-        const saved = prev[i];
-        const stays = prev.filter((_, j) => i !== j);
+      const saved = queue[i];
+      const stays = queue.filter((_, j) => i !== j);
 
-        if (!deck.length) {
-          setDeck([saved]);
-          return [...stays, PLACEHOLDER[0]].reverse();
-        }
+      const [next, ...remains] = !!deck.length ? deck : [newNeutral()];
+      setDeck([...remains, saved]);
 
-        const [next, ...remains] = deck;
-        setDeck([...remains, saved]);
-
-        return [...stays, next].reverse();
-      });
+      setQueue([next, ...stays]);
     },
-    [deck, setDeck, setQueue]
+    [deck, queue, setDeck, setQueue]
   );
 
   /**

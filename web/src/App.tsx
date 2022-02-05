@@ -1,5 +1,6 @@
+import { AnimatePresence, AnimateSharedLayout, motion } from "framer-motion";
 import React, { useState } from "react";
-import Card from "./components/shared/Card";
+import WindowCard from "./components/WindowCard";
 import { useHunt } from "./state/useHunt";
 
 const App: React.FC = () => {
@@ -16,61 +17,74 @@ const App: React.FC = () => {
       <div className="absolute top-5 right-5 font-mono text-red-400">
         Foes: {foes}
       </div>
-      <div className="flex items-center justify-center flex-row">
-        {state.map(({ team, isOpen, isTargeted }, i) => {
-          return (
-            <div
-              className="active:scale-90 mx-1"
-              key={i}
-              onClick={() => {
-                setAction((prev) => {
-                  if (!prev) return null;
-                  switch (prev) {
-                    case "lock":
-                      lockOn(i);
-                      break;
-                    case "fire":
-                      fire(i);
-                      break;
-                    case "call":
-                      call(i);
-                      break;
-                  }
-                  return null;
-                });
-              }}
-            >
-              <Card seed={isOpen ? team : undefined} isTargeted={isTargeted} />
-            </div>
-          );
-        })}
-      </div>
+      <motion.div className="flex items-center justify-center flex-row">
+        <AnimateSharedLayout>
+          <AnimatePresence>
+            {state.map(({ team, key, isOpen, isTargeted }, i) => {
+              return (
+                <motion.div key={key}>
+                  <WindowCard
+                    {...{
+                      team,
+                      isOpen,
+                      isTargeted,
+                      onClick: () => {
+                        setAction((prev) => {
+                          if (!prev) return null;
+                          switch (prev) {
+                            case "lock":
+                              lockOn(i);
+                              break;
+                            case "fire":
+                              fire(i);
+                              break;
+                            case "call":
+                              call(i);
+                              break;
+                          }
+                          return null;
+                        });
+                      },
+                    }}
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </AnimateSharedLayout>
+      </motion.div>
       <div className="absolute bottom-6 flex items-center justify-center">
         <div
-          className={`flex flex-col items-center justify-center w-32 h-16 mx-1 ${
-            currentAction !== "fire" ? "bg-violet-300" : "bg-lime-200"
+          className={`flex flex-col items-center justify-center w-32 h-16 mx-1 bg-violet-300 ${
+            currentAction === "fire" &&
+            "outline outline-offset-2 outline-2 outline-green-500"
           } rounded-lg shadow-lg select-none active:scale-90`}
           onClick={() => setAction("fire")}
         >
           <div className="font-mono text-white text-3xl">🚀</div>
         </div>
         <div
-          className={`flex flex-col items-center justify-center w-32 h-16 mx-1 ${
-            currentAction !== "lock" ? "bg-blue-300" : "bg-lime-200"
+          className={`flex flex-col items-center justify-center w-32 h-16 mx-1 bg-blue-300 ${
+            currentAction === "lock" &&
+            "outline outline-offset-2 outline-2 outline-green-500"
           } rounded-lg shadow-lg select-none active:scale-90`}
           onClick={() => setAction("lock")}
         >
           <div className="font-mono text-white text-3xl">🔭</div>
         </div>
         <div
-          className={`flex flex-col items-center justify-center w-32 h-16 mx-1 ${
-            currentAction !== "call" ? "bg-emerald-300" : "bg-lime-200"
+          className={`flex flex-col items-center justify-center w-32 h-16 mx-1 bg-emerald-300 ${
+            currentAction === "call" &&
+            "outline outline-offset-2 outline-2 outline-green-500"
           } rounded-lg shadow-lg select-none active:scale-90`}
           onClick={() => setAction("call")}
         >
           <div className="font-mono text-white text-3xl">📞</div>
         </div>
-        <div className="flex flex-col items-center justify-center w-32 h-16 mx-1 bg-red-300 rounded-lg shadow-lg select-none active:scale-90">
+        <div
+          className="flex flex-col items-center justify-center w-32 h-16 mx-1 bg-red-300 rounded-lg shadow-lg select-none active:scale-90"
+          onClick={() => next()}
+        >
           <div className="font-mono text-white text-3xl">🚨</div>
         </div>
       </div>

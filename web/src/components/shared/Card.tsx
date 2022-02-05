@@ -22,13 +22,12 @@ const Card: React.FC<Props> = ({ seed, isTargeted }) => {
     >
       {isOpen ? (
         <img
-          className="m-2 rounded-lg w-64 h-64"
+          className="m-2 rounded-lg w-56 h-56"
           src={`https://avatars.dicebear.com/api/micah/${seed}.svg`}
         />
       ) : (
-        <div className="m-6 rounded-lg w-64 h-64"></div>
+        <div className="m-2 rounded-lg w-56 h-56"></div>
       )}
-
       <div className="flex justify-center my-6 w-auto">
         <span
           className={`${
