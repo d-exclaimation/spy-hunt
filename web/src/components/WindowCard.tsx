@@ -5,7 +5,7 @@
 //  Created by d-exclaimation on 18:04.
 //
 
-import { motion, useIsPresent } from "framer-motion";
+import { motion } from "framer-motion";
 import React from "react";
 import Card from "./shared/Card";
 
@@ -17,15 +17,19 @@ type Props = {
 };
 
 const WindowCard: React.FC<Props> = ({ team, isOpen, isTargeted, onClick }) => {
-  const isPresent = useIsPresent();
   return (
     <motion.div
       initial="coming"
-      animate={isPresent ? "in" : "out"}
+      animate="in"
+      exit="out"
       variants={{
-        in: { x: 0, opacity: 1 },
+        in: { x: 0, opacity: 1, transition: { delay: 0.2 } },
         coming: { x: -25, opacity: 0 },
-        out: { x: 50, opacity: 0 },
+        out: {
+          x: 150,
+          opacity: 0,
+          transition: { duration: 0.2 },
+        },
       }}
       transition={{ type: "spring", velocity: 0.5, mass: 1 }}
       className="mx-1"

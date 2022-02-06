@@ -12,12 +12,12 @@ type Props = {
   isTargeted: boolean;
 };
 
-const Card: React.FC<Props> = ({ seed, isTargeted }) => {
+const Card: React.FC<Props> = ({ seed }) => {
   const isOpen = !!seed;
   return (
     <div
       className={`flex flex-col ${
-        isOpen ? "bg-white" : "bg-slate-700"
+        isOpen ? "bg-cyan-50" : "bg-slate-700"
       } rounded-lg shadow-md select-none active:shadow-xl`}
     >
       {isOpen ? (
@@ -28,15 +28,6 @@ const Card: React.FC<Props> = ({ seed, isTargeted }) => {
       ) : (
         <div className="m-2 rounded-lg w-56 h-56"></div>
       )}
-      <div className="flex justify-center my-6 w-auto">
-        <span
-          className={`${
-            isOpen ? "text-white" : "text-slate-700"
-          } text-4xl text-center`}
-        >
-          {isTargeted ? "🎯" : "_"}
-        </span>
-      </div>
     </div>
   );
 };
