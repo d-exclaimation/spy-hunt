@@ -26,7 +26,7 @@ const Card: React.FC<Props> = ({ seed }) => {
           src={`https://avatars.dicebear.com/api/micah/${seed}.svg`}
         />
       ) : (
-        <div className="m-2 rounded-lg w-56 h-56"></div>
+        <div className="m-2 rounded-lg w-56 h-56" />
       )}
     </div>
   );
