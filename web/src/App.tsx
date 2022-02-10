@@ -1,6 +1,5 @@
-import { AnimatePresence, AnimateSharedLayout, motion } from "framer-motion";
 import React, { useCallback, useEffect, useState } from "react";
-import Action from "./components/Action";
+import ActionView from "./components/ActionView";
 import Targets from "./components/Targets";
 import Uppers from "./components/Uppers";
 import WindowView from "./components/WindowView";
@@ -14,7 +13,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (playerHand.length > 3) return;
-    console.log(playerHand.length);
     refill();
   }, [playerHand]);
 
@@ -68,22 +66,11 @@ const App: React.FC = () => {
         <Targets state={state} onClickWindow={onClickWindow} />
       </div>
       <div className="absolute bottom-6 flex items-center justify-center">
-        <AnimateSharedLayout>
-          <AnimatePresence>
-            {playerHand.map(({ key, type, color, icon }, i) => (
-              <motion.div key={key}>
-                <Action
-                  currentAction={currentAction}
-                  type={type}
-                  action={action(i)}
-                  color={color}
-                  icon={icon}
-                  _key={key}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </AnimateSharedLayout>
+        <ActionView
+          currentAction={currentAction}
+          playerHand={playerHand}
+          action={action}
+        />
       </div>
     </div>
   );
