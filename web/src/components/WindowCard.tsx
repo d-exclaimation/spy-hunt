@@ -7,7 +7,7 @@
 
 import { motion } from "framer-motion";
 import React from "react";
-import Card from "./shared/Card";
+import Card from "./Card";
 
 type Props = {
   team: string;
@@ -32,10 +32,10 @@ const WindowCard: React.FC<Props> = ({ team, isOpen, isTargeted, onClick }) => {
         },
       }}
       transition={{ type: "spring", velocity: 0.5, mass: 1 }}
-      className="mx-1"
-      onClick={onClick}
     >
-      <Card seed={isOpen ? team : undefined} isTargeted={isTargeted} />
+      <div className="mx-1 active:scale-90" onClick={onClick}>
+        <Card seed={isOpen ? team : undefined} isTargeted={isTargeted} />
+      </div>
     </motion.div>
   );
 };

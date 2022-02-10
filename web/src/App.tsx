@@ -1,21 +1,28 @@
-import React, { useCallback, useState } from "react";
-import Action from "./components/shared/Action";
+import { AnimatePresence, AnimateSharedLayout, motion } from "framer-motion";
+import React, { useCallback, useEffect, useState } from "react";
+import Action from "./components/Action";
 import Targets from "./components/Targets";
 import Uppers from "./components/Uppers";
 import WindowView from "./components/WindowView";
-import { ActionCard } from "./state/useAction";
+import { ActionCard, ActiveAction, useAction } from "./state/useAction";
 import { useHunt } from "./state/useHunt";
 
 const App: React.FC = () => {
+  const { use, playerHand, refill } = useAction();
   const { state, lockOn, fire, next, call, allies, foes, shutter } = useHunt();
-  const [currentAction, setAction] = useState<"lock" | "fire" | "call" | null>(
-    null
-  );
+  const [currentAction, setAction] = useState<ActiveAction | null>(null);
+
+  useEffect(() => {
+    if (playerHand.length > 3) return;
+    console.log(playerHand.length);
+    refill();
+  }, [playerHand]);
 
   const onClickWindow = useCallback(
     (i: number) => {
       if (!currentAction) return;
-      switch (currentAction) {
+      const { type, index } = currentAction;
+      switch (type) {
         case "lock":
           lockOn(i);
           break;
@@ -25,25 +32,24 @@ const App: React.FC = () => {
         case "call":
           call(i);
           break;
+        case "close":
+          shutter();
+          break;
+        case "next":
+          next();
+          break;
       }
+      use(index);
       setAction(null);
     },
     [setAction, currentAction, fire, call, lockOn]
   );
 
   const action = useCallback(
-    (type: ActionCard["type"]) => {
-      if (type === "next") {
-        next();
-        return;
-      }
-
-      if (type === "close") {
-        shutter();
-        return;
-      }
-
-      setAction(type);
+    (index: number) => {
+      return (type: ActionCard["type"], key: string) => {
+        setAction({ type, key, index });
+      };
     },
     [next, shutter, setAction]
   );
@@ -62,34 +68,22 @@ const App: React.FC = () => {
         <Targets state={state} onClickWindow={onClickWindow} />
       </div>
       <div className="absolute bottom-6 flex items-center justify-center">
-        <Action
-          currentAction={currentAction}
-          type="fire"
-          action={action}
-          color="bg-violet-300"
-          icon="🚀"
-        />
-        <Action
-          currentAction={currentAction}
-          type="lock"
-          action={action}
-          color="bg-blue-300"
-          icon="🔭"
-        />
-        <Action
-          currentAction={currentAction}
-          type="call"
-          action={action}
-          color="bg-emerald-300"
-          icon="📞"
-        />
-        <Action
-          currentAction={currentAction}
-          type="next"
-          action={action}
-          color="bg-red-300"
-          icon="🚨"
-        />
+        <AnimateSharedLayout>
+          <AnimatePresence>
+            {playerHand.map(({ key, type, color, icon }, i) => (
+              <motion.div key={key}>
+                <Action
+                  currentAction={currentAction}
+                  type={type}
+                  action={action(i)}
+                  color={color}
+                  icon={icon}
+                  _key={key}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </AnimateSharedLayout>
       </div>
     </div>
   );
