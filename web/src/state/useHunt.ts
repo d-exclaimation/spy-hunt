@@ -59,13 +59,13 @@ export function useHunt() {
   useEffect(() => {
     const neutral = Array<string>(20)
       .fill(PLACEHOLDER[0])
-      .map((team, i) => ({ team, key: v4() }));
+      .map((team) => ({ team, key: v4() }));
     const allies = Array<string>(20)
       .fill(PLACEHOLDER[1])
-      .map((team: string, i) => ({ team, key: v4() }));
+      .map((team: string) => ({ team, key: v4() }));
     const foes = Array<string>(20)
       .fill(PLACEHOLDER[2])
-      .map((team: string, i) => ({ team, key: v4() }));
+      .map((team: string) => ({ team, key: v4() }));
 
     const [_0, _1, _2, _3, _4, ...initial] = shuffled<Agent>([
       ...allies,

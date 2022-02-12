@@ -42,35 +42,42 @@ export function useAction() {
   return { playerHand, use, refill };
 }
 
-function randomCard(): ActionCard {
-  const i = Math.floor(Math.random() * 5);
-  const cardTypes: { [key: number]: Omit<ActionCard, "key"> } = {
-    0: {
-      type: "fire",
-      color: "bg-violet-300",
-      icon: "🚀",
-    },
-    1: {
-      type: "lock",
-      color: "bg-blue-300",
-      icon: "🔭",
-    },
-    2: {
-      type: "call",
-      color: "bg-emerald-300",
-      icon: "📞",
-    },
-    3: {
-      type: "next",
-      color: "bg-red-300",
-      icon: "🚨",
-    },
-    4: {
-      type: "close",
-      color: "bg-yellow-300",
-      icon: "🪟",
-    },
-  };
+export function randomCard(): ActionCard {
+  const chances = Math.random();
 
-  return { ...cardTypes[i], key: v4() };
+  const res = ((): Omit<ActionCard, "key"> => {
+    if (chances < 0.025) {
+      return {
+        type: "close",
+        color: "bg-yellow-300",
+        icon: "🪟",
+      };
+    } else if (chances < 0.075) {
+      return {
+        type: "next",
+        color: "bg-red-300",
+        icon: "🚨",
+      };
+    } else if (chances < 0.2) {
+      return {
+        type: "call",
+        color: "bg-emerald-300",
+        icon: "📞",
+      };
+    } else if (chances < 0.6) {
+      return {
+        type: "fire",
+        color: "bg-violet-300",
+        icon: "🚀",
+      };
+    } else {
+      return {
+        type: "lock",
+        color: "bg-blue-300",
+        icon: "🔭",
+      };
+    }
+  })();
+
+  return { ...res, key: v4() };
 }

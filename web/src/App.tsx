@@ -7,18 +7,25 @@ import { ActionCard, ActiveAction, useAction } from "./state/useAction";
 import { useHunt } from "./state/useHunt";
 
 const App: React.FC = () => {
+  const [isMyTurn, setTurn] = useState(true);
   const { use, playerHand, refill } = useAction();
   const { state, lockOn, fire, next, call, allies, foes, shutter } = useHunt();
   const [currentAction, setAction] = useState<ActiveAction | null>(null);
 
   useEffect(() => {
     if (playerHand.length > 3) return;
-    refill();
+    setTurn(false);
+
+    setTimeout(() => {
+      next();
+      refill();
+      setTurn(true);
+    }, 0);
   }, [playerHand]);
 
   const onClickWindow = useCallback(
     (i: number) => {
-      if (!currentAction) return;
+      if (!currentAction || !isMyTurn) return;
       const { type, index } = currentAction;
       switch (type) {
         case "lock":
@@ -40,16 +47,17 @@ const App: React.FC = () => {
       use(index);
       setAction(null);
     },
-    [setAction, currentAction, fire, call, lockOn]
+    [setAction, currentAction, fire, call, lockOn, isMyTurn]
   );
 
   const action = useCallback(
     (index: number) => {
       return (type: ActionCard["type"], key: string) => {
+        if (!isMyTurn) return;
         setAction({ type, key, index });
       };
     },
-    [next, shutter, setAction]
+    [next, shutter, setAction, isMyTurn]
   );
 
   return (
