@@ -27,6 +27,11 @@ export function useAction() {
       .map(() => randomCard())
   );
 
+  /**
+   * Use a card and remove it from hand
+   *
+   * @param i Index of card
+   */
   const use = useCallback(
     (i: number) => {
       setPlayerHand((hand) => hand.filter((_, j) => j !== i));
@@ -34,6 +39,9 @@ export function useAction() {
     [setPlayerHand]
   );
 
+  /**
+   * Refill the hand
+   */
   const refill = useCallback(
     () => setPlayerHand((curr) => [randomCard(), randomCard(), ...curr]),
     [setPlayerHand]
@@ -42,6 +50,10 @@ export function useAction() {
   return { playerHand, use, refill };
 }
 
+/**
+ * Generate a new card as if drawn from a deck
+ * @returns A random Action card with proper chances
+ */
 export function randomCard(): ActionCard {
   const chances = Math.random();
 

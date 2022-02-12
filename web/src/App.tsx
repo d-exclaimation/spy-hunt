@@ -6,22 +6,31 @@ import WindowView from "./components/WindowView";
 import { ActionCard, ActiveAction, useAction } from "./state/useAction";
 import { useHunt } from "./state/useHunt";
 
+const sleep = (time: number) =>
+  new Promise<null>((resolve, _) => setTimeout(() => resolve(null), time));
+
 const App: React.FC = () => {
   const [isMyTurn, setTurn] = useState(true);
+  const [isEnemyDone, setEnemyDone] = useState(false);
   const { use, playerHand, refill } = useAction();
-  const { state, lockOn, fire, next, call, allies, foes, shutter } = useHunt();
+  const { state, lockOn, fire, next, call, allies, foes, shutter, cpu } =
+    useHunt();
   const [currentAction, setAction] = useState<ActiveAction | null>(null);
 
   useEffect(() => {
     if (playerHand.length > 3) return;
     setTurn(false);
-
-    setTimeout(() => {
-      next();
-      refill();
-      setTurn(true);
-    }, 0);
+    cpu();
+    setTimeout(() => setEnemyDone(true), 1000);
   }, [playerHand]);
+
+  useEffect(() => {
+    if (!isEnemyDone) return;
+    next();
+    refill();
+    setTurn(true);
+    setEnemyDone(false);
+  }, [isEnemyDone]);
 
   const onClickWindow = useCallback(
     (i: number) => {
@@ -64,6 +73,13 @@ const App: React.FC = () => {
     <div className="flex items-center justify-center w-screen h-screen bg-slate-800">
       <div className="absolute top-5 left-5 font-mono text-blue-400">
         Allies: {allies}
+      </div>
+      <div
+        className={`absolute top-5 font-mono ${
+          isMyTurn ? "text-green-400" : "text-yellow-400"
+        }`}
+      >
+        {isMyTurn ? "Your turn" : "Enemy turn"}
       </div>
       <div className="absolute top-5 right-5 font-mono text-red-400">
         Foes: {foes}

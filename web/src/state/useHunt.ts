@@ -57,7 +57,7 @@ export function useHunt() {
    * Initial State
    */
   useEffect(() => {
-    const neutral = Array<string>(20)
+    const neutral = Array<string>(0)
       .fill(PLACEHOLDER[0])
       .map((team) => ({ team, key: v4() }));
     const allies = Array<string>(20)
@@ -83,6 +83,10 @@ export function useHunt() {
 
     /* eslint-ignore */
   }, []);
+
+  useEffect(() => {
+    console.log({ deck, length: deck.length });
+  }, [deck]);
 
   // MARK: --- Actions ---
 
@@ -145,6 +149,34 @@ export function useHunt() {
   );
 
   /**
+   * Shot a window
+   *
+   * @param i Index of the window
+   */
+  const quickFire = useCallback(
+    (i: number) => {
+      if (i < 0 || i > 4) return;
+
+      /// Get the next agent from deck
+      const [next, ...rest] = !!deck.length ? deck : [newNeutral()];
+      setDeck(rest);
+
+      // Remove marking
+      setWindows((previousWindows) =>
+        previousWindows.map((prev, j) => ({
+          ...prev,
+          isTargeted: i === j ? false : prev.isTargeted,
+          isOpen: i === j ? true : prev.isOpen,
+        }))
+      );
+
+      // Remove agent
+      setQueue((prev) => [next, ...prev.filter((_, j) => i !== j)]);
+    },
+    [setQueue, setWindows, setDeck, deck]
+  );
+
+  /**
    * Call a person behind a window to remove them from the queue
    *
    * @param i Index of the window
@@ -184,6 +216,81 @@ export function useHunt() {
     [setWindows]
   );
 
+  // Mark: --- CPU Logic ---
+
+  const cpu = useCallback(() => {
+    const action: Record<string, () => void> = {
+      "target-as-many": () => {
+        // Lock on as many (2) as possible if there are remaining
+        windows
+          .map((window, i) => ({ ...window, i }))
+          .filter(({ isTargeted }) => !isTargeted)
+          .map(({ i }) => i)
+          .slice(0, 2)
+          .forEach((i) => {
+            lockOn(i);
+          });
+      },
+      "shot-immediately": () => {
+        const i = Math.floor(Math.random() * 5);
+        quickFire(i);
+      },
+      "call-as-many": () => {
+        const [i, j] = [
+          Math.floor(Math.random() * 5),
+          Math.floor(Math.random() * 5),
+        ];
+
+        call(i);
+        call(j);
+      },
+      "target-and-call": () => {
+        const i = Math.floor(Math.random() * 5);
+
+        call(i);
+        lockOn(i);
+      },
+      "shutter-and-next": () => {
+        shutter();
+        next();
+      },
+      "shot-existing": () => {
+        // Fire as many (2) as possible if there are targeted
+        windows
+          .map((window, i) => ({ ...window, i }))
+          .filter(({ isTargeted }) => isTargeted)
+          .map(({ i }) => i)
+          .slice(0, 2)
+          .forEach((i) => {
+            fire(i);
+          });
+      },
+    };
+    const [strategy, ..._rest] = shuffled([
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "target-as-many",
+      "target-as-many",
+      "call-as-many",
+      "target-and-call",
+      "shutter-and-next",
+      "shot-existing",
+      "shot-existing",
+    ]);
+
+    console.log(strategy);
+    const move = action[strategy];
+    move();
+  }, [windows, fire, shutter, lockOn, call, next]);
+
   // MARK: --- EXPORTS ---
 
   return {
@@ -196,5 +303,6 @@ export function useHunt() {
     call,
     trap,
     shutter,
+    cpu,
   };
 }
