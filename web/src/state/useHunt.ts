@@ -57,7 +57,7 @@ export function useHunt() {
    * Initial State
    */
   useEffect(() => {
-    const neutral = Array<string>(0)
+    const neutral = Array<string>(10)
       .fill(PLACEHOLDER[0])
       .map((team) => ({ team, key: v4() }));
     const allies = Array<string>(20)
@@ -260,7 +260,7 @@ export function useHunt() {
           .map((window, i) => ({ ...window, i }))
           .filter(({ isTargeted }) => isTargeted)
           .map(({ i }) => i)
-          .slice(0, 2)
+          .slice(0, 1)
           .forEach((i) => {
             fire(i);
           });

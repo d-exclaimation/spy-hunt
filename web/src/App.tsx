@@ -6,9 +6,6 @@ import WindowView from "./components/WindowView";
 import { ActionCard, ActiveAction, useAction } from "./state/useAction";
 import { useHunt } from "./state/useHunt";
 
-const sleep = (time: number) =>
-  new Promise<null>((resolve, _) => setTimeout(() => resolve(null), time));
-
 const App: React.FC = () => {
   const [isMyTurn, setTurn] = useState(true);
   const [isEnemyDone, setEnemyDone] = useState(false);
@@ -69,19 +66,35 @@ const App: React.FC = () => {
     [next, shutter, setAction, isMyTurn]
   );
 
+  if (allies === 0) {
+    return (
+      <div className="flex items-center justify-center w-screen h-screen bg-red-900 text-white font-mono text-lg">
+        You lose
+      </div>
+    );
+  }
+
+  if (foes === 0) {
+    return (
+      <div className="flex items-center justify-center w-screen h-screen bg-teal-900 text-white font-mono text-lg">
+        You win
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-center w-screen h-screen bg-slate-800">
-      <div className="absolute top-5 left-5 font-mono text-blue-400">
+    <div
+      className={`flex items-center justify-center w-screen h-screen ${
+        isMyTurn ? "bg-teal-900" : "bg-red-900"
+      }`}
+    >
+      <div className="absolute top-5 left-5 font-mono text-blue-300">
         Allies: {allies}
       </div>
-      <div
-        className={`absolute top-5 font-mono ${
-          isMyTurn ? "text-green-400" : "text-yellow-400"
-        }`}
-      >
+      <div className="absolute top-5 font-mono text-slate-200">
         {isMyTurn ? "Your turn" : "Enemy turn"}
       </div>
-      <div className="absolute top-5 right-5 font-mono text-red-400">
+      <div className="absolute top-5 right-5 font-mono text-red-300">
         Foes: {foes}
       </div>
       <div className="flex items-center justify-center flex-col">

@@ -12,10 +12,10 @@ const Uppers: React.FC = () => {
     <div className="flex items-center justify-center flex-row mb-4">
       {[0, 1, 2, 3, 4].map((_, i) => (
         <div
-          className="flex justify-center py-2 mx-1 w-60 bg-slate-600 rounded-lg active:scale-90"
+          className="flex justify-center py-2 mx-1 w-60 bg-slate-400 rounded-lg active:scale-90"
           key={i}
         >
-          <span className="text-slate-600 text-4xl text-center">{"_"}</span>
+          <span className="text-slate-400 text-4xl text-center">{"_"}</span>
         </div>
       ))}
     </div>
