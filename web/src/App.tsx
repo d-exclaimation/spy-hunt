@@ -5,6 +5,7 @@ import Uppers from "./components/Uppers";
 import WindowView from "./components/WindowView";
 import { ActionCard, ActiveAction, useAction } from "./state/useAction";
 import { useHunt } from "./state/useHunt";
+import { match } from "./utils/match";
 
 const App: React.FC = () => {
   const [isMyTurn, setTurn] = useState(true);
@@ -33,23 +34,13 @@ const App: React.FC = () => {
     (i: number) => {
       if (!currentAction || !isMyTurn) return;
       const { type, index } = currentAction;
-      switch (type) {
-        case "lock":
-          lockOn(i);
-          break;
-        case "fire":
-          fire(i);
-          break;
-        case "call":
-          call(i);
-          break;
-        case "close":
-          shutter();
-          break;
-        case "next":
-          next();
-          break;
-      }
+      match(type, {
+        lock: () => lockOn(i),
+        fire: () => fire(i),
+        call: () => call(i),
+        close: () => shutter(),
+        next: () => next(),
+      });
       use(index);
       setAction(null);
     },

@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { v4 } from "uuid";
 import { shuffled } from "../utils/shuffle";
+import { match } from "./../utils/match";
 
 const PLACEHOLDER: Record<number, string> = {
   0: "forest",
@@ -215,7 +216,30 @@ export function useHunt() {
   // Mark: --- CPU Logic ---
 
   const cpu = useCallback(() => {
-    const action: Record<string, () => void> = {
+    const [strategy, ..._rest]: (
+      | "shot-immediately"
+      | "target-as-many"
+      | "call-as-many"
+      | "target-and-call"
+      | "shutter-and-next"
+      | "shot-existing"
+    )[] = shuffled([
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "shot-immediately",
+      "target-as-many",
+      "target-as-many",
+      "call-as-many",
+      "target-and-call",
+      "shutter-and-next",
+      "shot-existing",
+      "shot-existing",
+    ]);
+
+    match(strategy, {
       "target-as-many": () => {
         // Lock on as many (2) as possible if there are remaining
         windows
@@ -285,26 +309,9 @@ export function useHunt() {
           fire(i);
         });
       },
-    };
-    const [strategy, ..._rest] = shuffled([
-      "shot-immediately",
-      "shot-immediately",
-      "shot-immediately",
-      "shot-immediately",
-      "shot-immediately",
-      "shot-immediately",
-      "target-as-many",
-      "target-as-many",
-      "call-as-many",
-      "target-and-call",
-      "shutter-and-next",
-      "shot-existing",
-      "shot-existing",
-    ]);
+    });
 
     console.log(strategy);
-    const move = action[strategy];
-    move();
   }, [windows, fire, shutter, lockOn, call, next, queue]);
 
   // MARK: --- EXPORTS ---
