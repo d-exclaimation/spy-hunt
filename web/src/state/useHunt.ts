@@ -57,7 +57,7 @@ export function useHunt() {
    * Initial State
    */
   useEffect(() => {
-    const neutral = Array<string>(10)
+    const neutral = Array<string>(20)
       .fill(PLACEHOLDER[0])
       .map((team) => ({ team, key: v4() }));
     const allies = Array<string>(20)
@@ -83,10 +83,6 @@ export function useHunt() {
 
     /* eslint-ignore */
   }, []);
-
-  useEffect(() => {
-    console.log({ deck, length: deck.length });
-  }, [deck]);
 
   // MARK: --- Actions ---
 
@@ -232,7 +228,18 @@ export function useHunt() {
           });
       },
       "shot-immediately": () => {
-        const i = Math.floor(Math.random() * 5);
+        const opt = queue
+          .map(({ ...rest }, i) => ({ ...rest, i }))
+          .filter(({ team }) => team !== PLACEHOLDER[2]);
+
+        if (opt.length === 0) {
+          const i = Math.floor(Math.random() * 5);
+
+          quickFire(i);
+          return;
+        }
+
+        const [{ i }, ..._idc] = shuffled(opt);
         quickFire(i);
       },
       "call-as-many": () => {
@@ -256,21 +263,30 @@ export function useHunt() {
       },
       "shot-existing": () => {
         // Fire as many (2) as possible if there are targeted
-        windows
-          .map((window, i) => ({ ...window, i }))
-          .filter(({ isTargeted }) => isTargeted)
-          .map(({ i }) => i)
-          .slice(0, 1)
-          .forEach((i) => {
+        const selection = windows
+          .map((window, i) => ({
+            ...window,
+            i,
+            isFriendly: queue[i].team === PLACEHOLDER[2],
+          }))
+          .filter(({ isTargeted }) => isTargeted);
+
+        const opt = selection
+          .filter(({ isFriendly }) => !isFriendly)
+          .slice(0, 1);
+
+        if (opt.length == 0) {
+          selection.slice(0, 1).forEach(({ i }) => {
             fire(i);
           });
+          return;
+        }
+        opt.forEach(({ i }) => {
+          fire(i);
+        });
       },
     };
     const [strategy, ..._rest] = shuffled([
-      "shot-immediately",
-      "shot-immediately",
-      "shot-immediately",
-      "shot-immediately",
       "shot-immediately",
       "shot-immediately",
       "shot-immediately",
@@ -289,7 +305,7 @@ export function useHunt() {
     console.log(strategy);
     const move = action[strategy];
     move();
-  }, [windows, fire, shutter, lockOn, call, next]);
+  }, [windows, fire, shutter, lockOn, call, next, queue]);
 
   // MARK: --- EXPORTS ---
 

@@ -68,7 +68,7 @@ const App: React.FC = () => {
 
   if (allies === 0) {
     return (
-      <div className="flex items-center justify-center w-screen h-screen bg-red-900 text-white font-mono text-lg">
+      <div className="flex items-center justify-center w-screen h-screen bg-red-400 text-slate-800 font-mono text-lg">
         You lose
       </div>
     );
@@ -76,7 +76,7 @@ const App: React.FC = () => {
 
   if (foes === 0) {
     return (
-      <div className="flex items-center justify-center w-screen h-screen bg-teal-900 text-white font-mono text-lg">
+      <div className="flex items-center justify-center w-screen h-screen bg-emerald-400 text-slate-800 font-mono text-lg">
         You win
       </div>
     );
@@ -85,10 +85,10 @@ const App: React.FC = () => {
   return (
     <div
       className={`flex items-center justify-center w-screen h-screen ${
-        isMyTurn ? "bg-teal-900" : "bg-red-900"
+        isMyTurn ? "bg-slate-800" : "bg-red-900"
       }`}
     >
-      <div className="absolute top-5 left-5 font-mono text-blue-300">
+      <div className="absolute top-5 left-5 font-mono text-emerald-300">
         Allies: {allies}
       </div>
       <div className="absolute top-5 font-mono text-slate-200">
