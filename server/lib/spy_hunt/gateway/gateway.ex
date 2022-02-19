@@ -17,6 +17,14 @@ defmodule SpyHunt.Gateway do
           lobbies: [any()]
         }
 
+  @doc """
+  Start the genserver
+  """
+  @spec start_link(GenServer.options()) :: GenServer.on_start()
+  def start_link(_opts) do
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+  end
+
   @impl true
   @spec init(any()) :: {:ok, state()}
   def init(:ok) do
@@ -41,5 +49,12 @@ defmodule SpyHunt.Gateway do
 
         {:reply, %{}, %{lobbies: new_lobbies}}
     end
+  end
+
+  @impl true
+  @spec handle_cast(:test, state()) :: {:noreply, state()}
+  def handle_cast(:test, state) do
+    IO.inspect(state)
+    {:noreply, state}
   end
 end
