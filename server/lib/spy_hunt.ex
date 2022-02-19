@@ -7,6 +7,7 @@ defmodule SpyHunt do
   @spec start(any(), any()) :: {:ok, pid} | {:error, any()}
   def start(_t, _a) do
     children = [
+      {SpyHunt.Gateway.Supervisor, name: SpyHunt.Gateway.Supervisor},
       Plug.Cowboy.child_spec(
         scheme: :http,
         plug: SpyHunt.Router,

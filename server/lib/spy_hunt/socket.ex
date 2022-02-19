@@ -23,23 +23,31 @@ defmodule SpyHunt.Socket do
 
   @spec init(:cowboy_req.req(), state()) :: {:cowboy_websocket, :cowboy_req.req(), state()}
   def init(%{headers: %{"sec-websocket-protocol" => protocols}} = request, _state) do
+    # Dummy state
     state = %{
       client: %Client{pid: self()},
       room: nil
     }
 
+    # Getting the sub-protocols
     subs =
       protocols
       |> String.split(",")
       |> Enum.map(&String.trim/1)
 
+    # Validating subprotocol
     using_protocol? = fn subprotocol ->
       subprotocol === @protocol
     end
 
     with [h | t] <- subs,
          true <- Enum.any?([h | t], using_protocol?) do
-      new_request = :cowboy_req.set_resp_header("sec-websocket-protocol", "#{@protocol}", request)
+      new_request =
+        :cowboy_req.set_resp_header(
+          "sec-websocket-protocol",
+          "#{@protocol}",
+          request
+        )
 
       {:cowboy_websocket, new_request, state}
     else
@@ -50,6 +58,7 @@ defmodule SpyHunt.Socket do
 
   @spec websocket_init(state()) :: response()
   def websocket_init(_state) do
+    # Initial valid state
     state = %{
       client: %Client{pid: self()},
       room: nil
@@ -78,5 +87,11 @@ defmodule SpyHunt.Socket do
   @spec websocket_info(String.t(), state()) :: response()
   def websocket_info(message, state) do
     {:reply, {:text, message}, state}
+  end
+
+  @spec terminate(atom() | any(), map(), state()) :: :ok
+  def terminate(reason, _req, state) do
+    IO.puts("#{inspect(state.client.pid)} disonnected because of #{inspect(reason)}")
+    :ok
   end
 end
