@@ -25,6 +25,10 @@ defmodule SpyHunt.Gateway do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
+  ## -- Client API --
+
+  ## -- Server API --
+
   @impl true
   @spec init(any()) :: {:ok, state()}
   def init(:ok) do

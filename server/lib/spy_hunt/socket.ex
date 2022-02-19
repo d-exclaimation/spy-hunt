@@ -72,6 +72,10 @@ defmodule SpyHunt.Socket do
         }
       })
 
+    %{} =
+      SpyHunt.Gateway
+      |> GenServer.call({:join, state.client})
+
     IO.puts("A client connected successfully with a pid of #{inspect(state.client)}")
 
     {:reply, {:text, response}, state}
