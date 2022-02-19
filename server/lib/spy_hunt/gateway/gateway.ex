@@ -14,6 +14,7 @@ defmodule SpyHunt.Gateway do
   alias SpyHunt.Socket.Client
 
   @type state :: %{
+          # TODO: Lobbies into actual Lobby GenServer
           lobbies: [any()]
         }
 
@@ -36,12 +37,13 @@ defmodule SpyHunt.Gateway do
   end
 
   @impl true
-  @spec handle_call({:join, Client.t()}, GenServer.from(), state()) :: {:reply, %{}, state()}
+  @spec handle_call({:join, Client.t()}, GenServer.from(), state()) ::
+          {:reply, %{index: non_neg_integer()}, state()}
   def handle_call({:join, %Client{} = c}, _from, %{lobbies: lobbies}) do
     case Enum.find_index(lobbies, fn lobby -> Enum.count(lobby) < 2 end) do
       nil ->
-        new_lobbies = [[c] | lobbies]
-        {:reply, %{}, %{lobbies: new_lobbies}}
+        new_lobbies = lobbies ++ [c]
+        {:reply, %{index: Enum.count(lobbies)}, %{lobbies: new_lobbies}}
 
       i ->
         new_lobbies =
@@ -51,7 +53,7 @@ defmodule SpyHunt.Gateway do
             if i == j, do: [c | lobby], else: lobby
           end)
 
-        {:reply, %{}, %{lobbies: new_lobbies}}
+        {:reply, %{index: i}, %{lobbies: new_lobbies}}
     end
   end
 
@@ -61,4 +63,6 @@ defmodule SpyHunt.Gateway do
     IO.inspect(state)
     {:noreply, state}
   end
+
+  # TODO: handle_cast({:leave, room_info}) for cleanup
 end

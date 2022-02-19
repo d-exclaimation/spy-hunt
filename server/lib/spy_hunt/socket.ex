@@ -15,7 +15,7 @@ defmodule SpyHunt.Socket do
 
   @type state :: %{
           client: Client.t(),
-          room: String.t() | nil
+          room: String.t() | non_neg_integer() | nil
         }
   @type response :: {:ok, state()} | {:reply, {:text, binary()}, state()}
 
@@ -59,22 +59,24 @@ defmodule SpyHunt.Socket do
   @spec websocket_init(state()) :: response()
   def websocket_init(_state) do
     # Initial valid state
-    state = %{
-      client: %Client{pid: self()},
-      room: nil
-    }
+    client = %Client{pid: self()}
 
     response =
       Jason.encode!(%{
         type: "init",
         payload: %{
-          id: inspect(state.client.pid)
+          id: inspect(client.pid)
         }
       })
 
-    %{} =
+    %{index: index} =
       SpyHunt.Gateway
-      |> GenServer.call({:join, state.client})
+      |> GenServer.call({:join, client})
+
+    state = %{
+      client: client,
+      room: index
+    }
 
     IO.puts("A client connected successfully with a pid of #{inspect(state.client)}")
 
@@ -84,6 +86,7 @@ defmodule SpyHunt.Socket do
   @spec websocket_handle({:text, any()}, state()) :: response()
   def websocket_handle({:text, json}, state) do
     resp = Jason.decode(json)
+    # TODO: Push to Gateway then into each Lobby
     IO.inspect(resp)
     {:ok, state}
   end
@@ -94,7 +97,8 @@ defmodule SpyHunt.Socket do
   end
 
   @spec terminate(atom() | any(), map(), state()) :: :ok
-  def terminate(reason, _req, state) do
+  def terminate(reason, _req, %{room: _room} = state) do
+    # TODO: Cleanup to Gateway using the room info
     IO.puts("#{inspect(state.client.pid)} disonnected because of #{inspect(reason)}")
     :ok
   end
