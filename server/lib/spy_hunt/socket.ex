@@ -11,14 +11,22 @@ defmodule SpyHunt.Socket do
   """
   @behaviour :cowboy_websocket
 
-  @type state :: %{}
+  alias SpyHunt.Socket.Client
+
+  @type state :: %{
+          client: Client.t(),
+          room: String.t() | nil
+        }
   @type response :: {:ok, state()} | {:reply, {:text, binary()}, state()}
 
   @protocol "spyhunt-ws"
 
   @spec init(:cowboy_req.req(), state()) :: {:cowboy_websocket, :cowboy_req.req(), state()}
   def init(%{headers: %{"sec-websocket-protocol" => protocols}} = request, _state) do
-    state = %{}
+    state = %{
+      client: %Client{pid: self()},
+      room: nil
+    }
 
     subs =
       protocols
@@ -41,16 +49,22 @@ defmodule SpyHunt.Socket do
   end
 
   @spec websocket_init(state()) :: response()
-  def websocket_init(state) do
+  def websocket_init(_state) do
+    state = %{
+      client: %Client{pid: self()},
+      room: nil
+    }
+
     response =
       Jason.encode!(%{
         type: "init",
         payload: %{
-          id: inspect(self())
+          id: inspect(state.client.pid)
         }
       })
 
-    IO.puts("A client connected successfully with a pid of #{inspect(self())}")
+    IO.puts("A client connected successfully with a pid of #{inspect(state.client)}")
+
     {:reply, {:text, response}, state}
   end
 
