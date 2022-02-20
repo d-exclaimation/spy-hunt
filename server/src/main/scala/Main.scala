@@ -29,7 +29,7 @@ object Main extends FailFastCirceSupport {
         )
       )
     } ~ path("ws") {
-      Socket.ws()
+      Socket.applyMiddleware()
     } ~ path(Remaining) { _ =>
       redirect(
         uri = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",

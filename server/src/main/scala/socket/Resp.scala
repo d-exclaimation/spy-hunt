@@ -7,24 +7,30 @@
 
 package socket
 
+import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
+import akka.util.ByteString
 import io.circe.syntax._
 
 sealed trait Resp
 
 object Resp {
-  case class Reply(message: String) extends Resp
+  case class Reply(message: Message) extends Resp
 
   case object Ok extends Resp
 
   case object Stop extends Resp
 
   def reply(message: String): Reply =
-    Reply(message)
+    Reply(TextMessage.Strict(message))
 
   def reply[T](json: T)(implicit encoder: io.circe.Encoder[T]): Reply = {
     val message = json.asJson.noSpaces
-    Reply(message)
+    Reply(TextMessage.Strict(message))
   }
+
+  def reply(binary: ByteString): Reply =
+    Reply(BinaryMessage.Strict(binary))
+
 
   def ok() = Ok
 

@@ -17,11 +17,15 @@ object Socket extends TransportLayer {
   def init(client: Client): Resp = {
     println(s"A client connected successfully with id of ${client.id}")
 
-    Resp.reply(TemplateResponse("ok", "Hello from websocket"))
+    Resp.reply(
+      TemplateResponse("ok", "Hello from websocket")
+    )
   }
 
   def message(_client: Client, msg: Message): Resp = {
-    Resp.reply(TemplateResponse("ok", msg.toString))
+    Resp.reply(
+      TemplateResponse("ok", msg.toString)
+    )
   }
 
   def terminate(client: Client): Resp = {

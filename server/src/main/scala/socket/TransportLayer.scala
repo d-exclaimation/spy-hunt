@@ -8,7 +8,8 @@
 
 package socket
 
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.NotUsed
+import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.server.Directives.handleWebSocketMessagesForProtocol
 import akka.http.scaladsl.server.Route
 import akka.stream.OverflowStrategy
@@ -20,23 +21,33 @@ import implicits.StreamExtensions._
 import java.util.UUID
 
 trait TransportLayer {
+  /** Websocket sub-protocol for `sec-websocket-protocol` */
   def protocol: String
 
-  def ws(): Route = {
+  /**
+   * Websocket handler
+   *
+   * @return a Akka HTTP route
+   */
+  def applyMiddleware(): Route = {
     handleWebSocketMessagesForProtocol(flow(), protocol)
   }
 
-  private def flow(): Flow[Message, TextMessage.Strict, _] = {
+  /**
+   * Flow stream for the Websocket handler
+   *
+   * @return a Flow with Message as input and TextMessage as output
+   */
+  private def flow(): Flow[Message, Message, _] = {
     val id = UUID.randomUUID().toString
 
     val (actorRef, publisher) = ActorSource
-      .actorRef[String](
+      .actorRef[Message](
         completionMatcher = Client.completionMatcher,
         failureMatcher = PartialFunction.empty,
         bufferSize = 64,
         overflowStrategy = OverflowStrategy.dropHead
       )
-      .map(TextMessage.Strict)
       .toMat(Sink.asPublisher(false))(Keep.both)
       .run()
 
@@ -47,7 +58,7 @@ trait TransportLayer {
     handle(client, resp)
 
     // Termination and Message callback
-    val sink: Sink[Message, Any] = Sink
+    val sink: Sink[Message, NotUsed] = Sink
       .onComplete[Unit] { _ =>
         val resp = terminate(client)
         handle(client, resp)
@@ -64,8 +75,21 @@ trait TransportLayer {
       .fromSinkAndSourceCoupled(sink, source)
   }
 
+  /**
+   * Initial callback after a client is initialized
+   *
+   * @param client Websocket client
+   * @return a Response for the client
+   */
   def init(client: Client): Resp
 
+  /**
+   * Incoming message callback
+   *
+   * @param client Websocket client
+   * @param msg    Incoming websocket message
+   * @return
+   */
   def message(client: Client, msg: Message): Resp
 
   def terminate(client: Client): Resp
