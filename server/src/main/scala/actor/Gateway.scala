@@ -18,14 +18,16 @@ object Gateway extends GenServer[Msg, State, Unit] {
 
   def cast(context: ActorContext[Msg], msg: Msg, state: State): Cast = msg match {
     case Msg.Join(client) =>
-      state.lobbies.indexWhere(lobby => lobby.length < 2) match {
+      val State(lobbies) = state
+
+      lobbies.indexWhere(_.length < 2) match {
         case -1 =>
-          val newLobbies = state.lobbies :+ Seq(client)
+          val newLobbies = lobbies :+ Seq(client)
           Cast.NoReply(
             State(newLobbies)
           )
         case i =>
-          val newLobbies = state.lobbies
+          val newLobbies = lobbies
             .zipWithIndex
             .map { case (lobby, j) =>
               if (i == j) lobby :+ client else lobby
