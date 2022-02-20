@@ -20,6 +20,9 @@ import implicits.StreamExtensions._
 
 import java.util.UUID
 
+/**
+ * Websocket TransportLayer trait
+ */
 trait TransportLayer {
   /** Websocket sub-protocol for `sec-websocket-protocol` */
   def protocol: String
@@ -92,8 +95,20 @@ trait TransportLayer {
    */
   def message(client: Client, msg: Message): Resp
 
+  /**
+   * Termination callback
+   *
+   * @param client Websocket client
+   * @return a Response
+   */
   def terminate(client: Client): Resp
 
+  /**
+   * Handle responses after being processed
+   *
+   * @param client Websocket client
+   * @param resp   Processed response
+   */
   private def handle(client: Client, resp: => Resp): Unit = resp match {
     case Resp.Reply(message) => client.send(message)
     case Resp.Stop => client.close()
