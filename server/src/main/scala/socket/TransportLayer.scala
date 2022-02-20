@@ -15,7 +15,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.typed.scaladsl.ActorSource
-import implicits.Global._
+import implicits.Services._
 import implicits.StreamExtensions._
 
 import java.util.UUID

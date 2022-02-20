@@ -13,11 +13,32 @@ import akka.actor.typed.scaladsl.ActorContext
 object Gateway extends GenServer[Msg, State, Unit] {
   def init(params: Unit): Init =
     Init.Ok(
-      gateway.State(lobbies = Seq.empty)
+      State(lobbies = Seq.empty)
     )
 
-  def cast(context: ActorContext[Msg], msg: Msg, state: State): Cast =
-    Cast.NoReply(state)
+  def cast(context: ActorContext[Msg], msg: Msg, state: State): Cast = msg match {
+    case Msg.Join(client) =>
+      state.lobbies.indexWhere(lobby => lobby.length < 2) match {
+        case -1 =>
+          val newLobbies = state.lobbies :+ Seq(client)
+          Cast.NoReply(
+            State(newLobbies)
+          )
+        case i =>
+          val newLobbies = state.lobbies
+            .zipWithIndex
+            .map { case (lobby, j) =>
+              if (i == j) lobby :+ client else lobby
+            }
+          Cast.NoReply(
+            State(newLobbies)
+          )
+      }
+
+    case Msg.Test =>
+      println(s"$state")
+      Cast.NoReply(state)
+  }
 
   def terminate(reason: String, state: State): Unit = ()
 }

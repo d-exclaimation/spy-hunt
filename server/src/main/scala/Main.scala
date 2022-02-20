@@ -11,7 +11,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import constants.Environments
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import implicits.Global._
+import implicits.Services._
 import io.circe.generic.auto._
 import model.TemplateResponse
 

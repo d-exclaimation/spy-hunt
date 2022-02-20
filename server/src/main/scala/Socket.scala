@@ -5,7 +5,9 @@
 //  Created by d-exclaimation on 1:59 PM.
 //
 
+import actor.gateway
 import akka.http.scaladsl.model.ws.Message
+import implicits.Services.system
 import io.circe.generic.auto._
 import model.TemplateResponse
 import socket.{Client, Resp, TransportLayer}
@@ -16,6 +18,8 @@ object Socket extends TransportLayer {
 
   def init(client: Client): Resp = {
     println(s"A client connected successfully with id of ${client.id}")
+
+    system ! gateway.Msg.Join(client)
 
     Resp.reply(
       TemplateResponse("ok", "Hello from websocket")

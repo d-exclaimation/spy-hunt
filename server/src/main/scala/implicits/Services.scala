@@ -13,7 +13,7 @@ import akka.stream.Materializer
 
 import scala.concurrent.ExecutionContext
 
-object Global {
+object Services {
   implicit val system: ActorSystem[gateway.Msg] = ActorSystem(Gateway.apply(), "SpyHuntWebSocket")
   implicit val materializer: Materializer = Materializer.createMaterializer(system)
   implicit val executionContext: ExecutionContext = system.executionContext
