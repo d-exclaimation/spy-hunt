@@ -46,7 +46,8 @@ object Party {
   def apply(client: Client): Behavior[Act] =
     party(Players.Waiting(client))
 
-  private def party(players: Players): Behavior[Act] = Behaviors.receive { (context, msg) =>
+  // TODO: Add `Deck`, `Agent`, and `Windows`, also handle game logic here
+  private def party(players: Players): Behavior[Act] = Behaviors.receive { (_, msg) =>
     msg match {
       case Act.Join(player2) => players match {
         case Players.Waiting(player1) =>
@@ -69,5 +70,4 @@ object Party {
         }
     }
   }
-
 }
