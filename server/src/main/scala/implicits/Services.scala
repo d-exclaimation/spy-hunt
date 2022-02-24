@@ -7,14 +7,14 @@
 
 package implicits
 
-import actor.{Gateway, gateway}
+import actor.Matchmaking
 import akka.actor.typed.ActorSystem
 import akka.stream.Materializer
 
 import scala.concurrent.ExecutionContext
 
 object Services {
-  implicit val system: ActorSystem[gateway.Msg] = ActorSystem(Gateway.apply(), "SpyHuntWebSocket")
+  implicit val system: ActorSystem[Matchmaking.Act] = ActorSystem(Matchmaking.apply(), "SpyHuntWebSocket")
   implicit val materializer: Materializer = Materializer.createMaterializer(system)
   implicit val executionContext: ExecutionContext = system.executionContext
 }

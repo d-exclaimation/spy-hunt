@@ -9,7 +9,7 @@
 package actor
 
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.actor.typed.{Behavior, RecipientRef}
+import akka.actor.typed.{ActorRef, Behavior, RecipientRef}
 
 /**
  * A GenServer is a process (Actor) and it can be used to keep state, execute code asynchronously and so on.
@@ -20,6 +20,8 @@ import akka.actor.typed.{Behavior, RecipientRef}
  * @tparam InitParams Initial parameter type
  */
 trait GenServer[Msg, State, InitParams] {
+
+  type Server = ActorRef[Msg]
 
   /** Initial returned value */
   sealed trait Init
