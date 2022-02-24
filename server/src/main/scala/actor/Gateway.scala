@@ -10,6 +10,7 @@ package actor
 import actor.gateway._
 import akka.actor.typed.scaladsl.ActorContext
 
+/** Gateway GenServer, prior to entering the gateway all process must be taken as asynchronous */
 object Gateway extends GenServer[Msg, State, Unit] {
   def init(params: Unit): Init =
     Init.Ok(
@@ -22,10 +23,10 @@ object Gateway extends GenServer[Msg, State, Unit] {
 
       lobbies.indexWhere(_.length < 2) match {
         case -1 =>
-          val newLobbies = lobbies :+ Seq(client)
           Cast.NoReply(
-            State(newLobbies)
+            State(lobbies = lobbies :+ Seq(client))
           )
+
         case i =>
           val newLobbies = lobbies
             .zipWithIndex
@@ -33,7 +34,7 @@ object Gateway extends GenServer[Msg, State, Unit] {
               if (i == j) lobby :+ client else lobby
             }
           Cast.NoReply(
-            State(newLobbies)
+            State(lobbies = newLobbies)
           )
       }
 
