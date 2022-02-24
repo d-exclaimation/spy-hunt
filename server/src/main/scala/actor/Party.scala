@@ -7,10 +7,9 @@
 
 package actor
 
-import actor.lobby.Msg
 import actor.utils.AskPattern.reply
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
 import socket.Client
 
 object Party {
@@ -36,6 +35,7 @@ object Party {
 
       def all = Seq(player1)
     }
+
     case class Full(player1: Client, player2: Client) extends Players {
       val isFull = true
 
