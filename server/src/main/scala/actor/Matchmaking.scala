@@ -18,7 +18,7 @@ import scala.collection.mutable
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
 
-class Matchmaking(context: ActorContext[Matchmaking.Act]) extends AbstractBehavior[Matchmaking.Act](context) {
+final class Matchmaking(context: ActorContext[Matchmaking.Act]) extends AbstractBehavior[Matchmaking.Act](context) {
 
   import Matchmaking._
 
@@ -27,39 +27,41 @@ class Matchmaking(context: ActorContext[Matchmaking.Act]) extends AbstractBehavi
 
   private val lobbies = mutable.Map.empty[String, ActiveLobby]
 
-  def onMessage(msg: Matchmaking.Act): Matchmaking = {
-    msg match {
-      case Act.Enter(player) =>
-        lobbies.find(_._2.isAvailable) match {
-          case Some((id, ActiveLobby(ref, _))) =>
-            ref ! Party.Act.Join(player)
-            val future = ref ? Party.Act.Status
-            context.pipeToSelf(future) {
-              case Failure(e) =>
-                println(e.getMessage)
-                Act.Ignore
+  def onMessage(msg: Matchmaking.Act): Matchmaking = receive(msg) {
+    case Act.Enter(player) =>
+      lobbies.find(_._2.isAvailable) match {
+        case Some((id, ActiveLobby(ref, _))) =>
+          ref ! Party.Act.Join(player)
+          val future = ref ? Party.Act.Status
+          context.pipeToSelf(future) {
+            case Failure(e) =>
+              println(e.getMessage)
+              Act.Ignore
 
-              case Success(value) =>
-                Act.Update(id, value)
-            }
+            case Success(value) =>
+              Act.Update(id, value)
+          }
 
-          case None =>
-            val id = UUID.randomUUID().toString
-            val ref = context.spawn(Party(player), id)
-            lobbies.update(id, ActiveLobby(ref, isAvailable = false))
-        }
+        case None =>
+          val id = UUID.randomUUID().toString
+          val ref = context.spawn(Party(player), id)
+          lobbies.update(id, ActiveLobby(ref, isAvailable = false))
+      }
 
-      case Act.Quit(player) =>
-        lobbies.values.foreach(_.ref ! Party.Act.Quit(player))
+    case Act.Quit(player) =>
+      lobbies.values.foreach(_.ref ! Party.Act.Quit(player))
 
-      case Act.Ignore => ()
+    case Act.Update(id, isAvailable) =>
+      lobbies
+        .get(id)
+        .map(lobby => ActiveLobby(lobby.ref, isAvailable))
+        .foreach(lobby => lobbies.update(id, lobby))
 
-      case Act.Update(id, isAvailable) =>
-        lobbies
-          .get(id)
-          .map(lobby => ActiveLobby(lobby.ref, isAvailable))
-          .foreach(lobby => lobbies.update(id, lobby))
-    }
+    case Act.Ignore => ()
+  }
+
+  private def receive(msg: Act)(respond: Act => Unit): Matchmaking = {
+    respond(msg)
     this
   }
 }
