@@ -7,16 +7,23 @@
 
 package actor
 
+import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.util.Timeout
 import socket.Client
 
 import java.util.UUID
 import scala.collection.mutable
+import scala.concurrent.duration.DurationInt
+import scala.util.{Failure, Success}
 
 class Matchmaking(context: ActorContext[Matchmaking.Act]) extends AbstractBehavior[Matchmaking.Act](context) {
 
   import Matchmaking._
+
+  implicit private val sys: ActorSystem[Nothing] = context.system
+  implicit private val timeout: Timeout = Timeout(5.seconds)
 
   private val lobbies = mutable.Map.empty[String, ActiveLobby]
 
@@ -26,7 +33,16 @@ class Matchmaking(context: ActorContext[Matchmaking.Act]) extends AbstractBehavi
         lobbies.find(_._2.isAvailable) match {
           case Some((id, ActiveLobby(ref, _))) =>
             ref ! Party.Act.Join(player)
-            lobbies.update(id, ActiveLobby(ref, isAvailable = true))
+            val future = ref ? Party.Act.Status
+            context.pipeToSelf(future) {
+              case Failure(e) =>
+                println(e.getMessage)
+                Act.Ignore
+
+              case Success(value) =>
+                Act.Update(id, value)
+            }
+
           case None =>
             val id = UUID.randomUUID().toString
             val ref = context.spawn(Party(player), id)
