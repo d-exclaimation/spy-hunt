@@ -8,63 +8,14 @@
 package actor
 
 import akka.actor.typed.scaladsl.AskPattern._
-import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
+import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.util.Timeout
 import socket.Client
 
 import java.util.UUID
-import scala.collection.mutable
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
-
-final class Matchmaking(context: ActorContext[Matchmaking.Act]) extends AbstractBehavior[Matchmaking.Act](context) {
-
-  import Matchmaking._
-
-  implicit private val sys: ActorSystem[Nothing] = context.system
-  implicit private val timeout: Timeout = Timeout(5.seconds)
-
-  private val lobbies = mutable.Map.empty[String, ActiveLobby]
-
-  def onMessage(msg: Matchmaking.Act): Matchmaking = receive(msg) {
-    case Act.Enter(player) =>
-      lobbies.find(_._2.isAvailable) match {
-        case Some((id, ActiveLobby(ref, _))) =>
-          ref ! Party.Act.Join(player)
-          val future = ref ? Party.Act.Status
-          context.pipeToSelf(future) {
-            case Failure(e) =>
-              println(e.getMessage)
-              Act.Ignore
-
-            case Success(value) =>
-              Act.Update(id, value)
-          }
-
-        case None =>
-          val id = UUID.randomUUID().toString
-          val ref = context.spawn(Party(player), id)
-          lobbies.update(id, ActiveLobby(ref, isAvailable = false))
-      }
-
-    case Act.Quit(player) =>
-      lobbies.values.foreach(_.ref ! Party.Act.Quit(player))
-
-    case Act.Update(id, isAvailable) =>
-      lobbies
-        .get(id)
-        .map(lobby => ActiveLobby(lobby.ref, isAvailable))
-        .foreach(lobby => lobbies.update(id, lobby))
-
-    case Act.Ignore => ()
-  }
-
-  private def receive(msg: Act)(respond: Act => Unit): Matchmaking = {
-    respond(msg)
-    this
-  }
-}
 
 object Matchmaking {
   sealed trait Act
@@ -85,6 +36,70 @@ object Matchmaking {
     isAvailable: Boolean
   )
 
+  def apply(): Behavior[Act] = matchmaking(Map.empty)
 
-  def apply(): Behavior[Act] = Behaviors.setup(new Matchmaking(_))
+  private def matchmaking(lobbies: Map[String, ActiveLobby]): Behavior[Act] = Behaviors.receive { (context, msg) =>
+    implicit val sys: ActorSystem[Nothing] = context.system
+    implicit val timeout: Timeout = Timeout(5.seconds)
+
+    msg match {
+      case Act.Enter(player) =>
+        // Find available lobbies
+        lobbies.find(_._2.isAvailable) match {
+          case Some((id, ActiveLobby(ref, _))) =>
+
+            // Distribute to the first available lobby
+            ref ! Party.Act.Join(player)
+
+            // Make sure the lobby status is in sync
+            context.pipeToSelf(ref ? Party.Act.Status) {
+              case Failure(e) =>
+                println(e.getMessage)
+                Act.Ignore
+
+              case Success(value) =>
+                Act.Update(id, value)
+            }
+
+            // Manual update will be confirmed with `Act.Update`
+            matchmaking(
+              lobbies.updated(id, ActiveLobby(ref, isAvailable = true))
+            )
+
+          case None =>
+
+            // Make new lobby if all is full
+            val id = UUID.randomUUID().toString
+            val ref = context.spawn(Party(player), id)
+
+            // Add this lobby
+            matchmaking(
+              lobbies.updated(id, ActiveLobby(ref, isAvailable = false))
+            )
+        }
+
+      case Act.Quit(player) =>
+
+        // Send a quit message all lobby
+        // TODO(Optimization): Save the player id to lobby id, to do in O(1) time
+        lobbies.values.foreach(_.ref ! Party.Act.Quit(player))
+        Behaviors.same
+
+      case Act.Update(id, isAvailable) =>
+        matchmaking(
+          lobbies
+            // Find the lobby
+            .get(id)
+            // If exist, update into ActiveLobby with new status
+            .map(lobby => ActiveLobby(lobby.ref, isAvailable))
+            // If exist, update into lobbies
+            .map(lobby => lobbies.updated(id, lobby))
+            // else, just left lobbies unchanged
+            .getOrElse(lobbies)
+        )
+
+      case Act.Ignore =>
+        Behaviors.same
+    }
+  }
 }

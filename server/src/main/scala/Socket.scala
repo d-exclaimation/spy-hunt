@@ -21,9 +21,7 @@ object Socket extends TransportLayer {
 
     system ! Act.Enter(client)
 
-    Resp.reply(
-      TemplateResponse("ok", "Hello from websocket")
-    )
+    Resp.ok()
   }
 
   def message(_client: Client, msg: Message): Resp = {
