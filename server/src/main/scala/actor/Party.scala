@@ -92,13 +92,11 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
       }
   }
 
+  // MARK: - Actions
+
   private def next(): Unit = {
     val removed = queue(4)
-    val next = if (deck.nonEmpty) deck.removeHead() else Agent.neutral()
-    for (i <- (1 to 4).reverse) {
-      queue.update(i, queue(i - 1))
-    }
-    queue.update(0, next)
+    shift(4)
     deck.append(removed)
   }
 
@@ -108,6 +106,41 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
     windows.update(i, Window(isOpen = prev.isOpen, isTargeted = true))
   }
 
+  private def fire(i: Int, quick: Boolean = false): Unit = {
+    if (i < 0 || i > 4) return
+    if (!quick && !windows(i).isTargeted) return
+    shift(i)
+    windows.update(i, Window())
+  }
+
+
+  private def call(i: Int): Unit = {
+    if (i < 0 || i > 4) return
+
+    val saved = queue(i)
+    shift(i)
+    deck.append(saved)
+  }
+
+  private def shutter(): Unit = {
+    for (i <- windows.indices) {
+      val prev = windows(i)
+      windows.update(i, Window(isOpen = false, isTargeted = prev.isTargeted))
+    }
+  }
+
+  private def shift(i: Int): Unit = {
+    if (i < 0 || i > 4) return
+    val next = if (deck.nonEmpty) deck.removeHead() else Agent.neutral()
+    if (i < 1) {
+      for (j <- (1 to i).reverse) {
+        queue.update(j, queue(j - 1))
+      }
+    }
+    queue.update(0, next)
+  }
+
+  // MARK: - Utils
 
   private def same(on: => Unit): Party = {
     on
