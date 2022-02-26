@@ -66,15 +66,9 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
         case Players.Waiting(player1) =>
           players = Players.Full(player1, player2)
 
-          player1.sendJson(
+          players.sendJson(team =>
             State(
-              queue.toSeq.map(_.perspective(Agent.PLAYER1))
-            )
-          )
-
-          player2.sendJson(
-            State(
-              queue.toSeq.map(_.perspective(Agent.PLAYER2))
+              queue.toSeq.map(_.perspective(team))
             )
           )
         case Players.Full(_, _) =>
