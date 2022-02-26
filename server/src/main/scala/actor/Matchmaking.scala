@@ -74,7 +74,7 @@ object Matchmaking {
 
             // Add this lobby
             matchmaking(
-              lobbies.updated(id, ActiveLobby(ref, isAvailable = false))
+              lobbies.updated(id, ActiveLobby(ref, isAvailable = true))
             )
         }
 

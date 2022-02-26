@@ -28,10 +28,7 @@ object Party {
   }
 
   case class State(
-    players: Seq[String],
-    deckCount: Int,
-    agents: Seq[Agent],
-    windows: Seq[Window]
+    agents: Seq[Agent]
   )
 
   def apply(client: Client): Behavior[Act] =
@@ -63,17 +60,23 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
     Window(), Window(), Window(), Window(), Window()
   )
 
-  {
-    players.player1.sendJson(
-      State(players = players.all.map(_.id), deckCount = deck.length, agents = queue.toSeq, windows = windows.toSeq)
-    )
-  }
-
   def onMessage(msg: Act): Behavior[Act] = msg match {
     case Act.Join(player2) => same {
       players match {
         case Players.Waiting(player1) =>
           players = Players.Full(player1, player2)
+
+          player1.sendJson(
+            State(
+              queue.toSeq.map(_.perspective(Agent.PLAYER1))
+            )
+          )
+
+          player2.sendJson(
+            State(
+              queue.toSeq.map(_.perspective(Agent.PLAYER2))
+            )
+          )
         case Players.Full(_, _) =>
           ()
       }

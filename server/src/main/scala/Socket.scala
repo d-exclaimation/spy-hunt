@@ -32,6 +32,9 @@ object Socket extends TransportLayer {
 
   def terminate(client: Client): Resp = {
     println(s"A client disconnected with id of ${client.id}")
+
+    system ! Act.Quit(client)
+
     Resp.ok()
   }
 }
