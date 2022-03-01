@@ -36,7 +36,7 @@ JSON message sent by the server to keep the local state in sync with the server 
 
 > [Example](./json/update_start.json)
 
-- `type: "updated"`
+- `type: "update"`
 - `payload:`
   - `state: Array[Agent & Window]`
   - `allies: Int`
@@ -53,7 +53,7 @@ JSON Message sent by the server to initialize the state of all client
 
 > [Example](./json/update_start.json)
 
-- `type: "started"`
+- `type: "start"`
 - `payload:`
   - `state: Array[Agent & Window]`
   - `allies: Int`
@@ -70,7 +70,7 @@ JSON Message sent by the server to end the game for all client
 
 > [Example](./json/end.json)
 
-- `type: "ended"`
+- `type: "end"`
 - `payload:`
   - `state: Array[Agent & Window]`
   - `win: Boolean`
