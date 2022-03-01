@@ -1,0 +1,34 @@
+[
+  {
+    "type": "update",
+    "payload": {
+      "state": [
+        {
+          "key": "...",
+          "team": 1,
+          "isOpen": true,
+          "isTargeted": false
+        }
+      ],
+      "allies": 17,
+      "foes": 13,
+      "isTurn": false
+    }
+  },
+  {
+    "type": "start",
+    "payload": {
+      "state": [
+        {
+          "key": "...",
+          "team": 1,
+          "isOpen": true,
+          "isTargeted": false
+        }
+      ],
+      "allies": 20,
+      "foes": 20,
+      "isTurn": true
+    }
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "type": "lock",
+    "payload": {
+      "index": 0
+    }
+  },
+  {
+    "type": "fire",
+    "payload": {
+      "index": 0
+    }
+  },
+  {
+    "type": "call",
+    "payload": {
+      "index": 0
+    }
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "type": "ack",
+  "payload": {
+    "state": [
+      {
+        "key": "...",
+        "team": 1,
+        "isOpen": true,
+        "isTargeted": false
+      }
+    ],
+    "win": true,
+    "reason": "..."
+  }
+}
