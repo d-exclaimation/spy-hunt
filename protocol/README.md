@@ -2,32 +2,6 @@
 
 ## JSON Protocol
 
-### `Init`
-
-**Client -> Server**
-
-JSON Message sent by either client to iniitalize connection
-
-> [Example](./json/init.json)
-
-- `type: "init"`
-
----
-
-### `Acknowledge`
-
-**Server -> Client**
-
-JSON Message sent by the server for the acknowledgement of client
-
-> [Example](./json/ack.json)
-
-- `type: "ack"`
-- `payload:`
-  - `id: String`
-
----
-
 ### `Update`
 
 **Server -> Client**
