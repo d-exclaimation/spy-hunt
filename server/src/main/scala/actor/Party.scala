@@ -10,6 +10,7 @@ package actor
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import io.circe.generic.auto._
+import model.protocol.InMessage
 import model.{Agent, Players, Window}
 import socket.Client
 
@@ -23,6 +24,8 @@ object Party {
     case class Join(player2: Client) extends Act
 
     case class Status(ref: ActorRef[Boolean]) extends Act
+
+    case class Incoming(player: Client, action: InMessage) extends Act
 
     case class Quit(player: Client) extends Act
   }
@@ -60,6 +63,9 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
     Window(), Window(), Window(), Window(), Window()
   )
 
+  private var isPlayer1Turn: Boolean = true
+  private var moves: Int = 2
+
   def onMessage(msg: Act): Behavior[Act] = msg match {
     case Act.Join(player2) => same {
       players match {
@@ -73,6 +79,33 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
           )
         case Players.Full(_, _) =>
           ()
+      }
+    }
+
+    case Act.Incoming(actingPlayer, action) => same {
+      val isValid = players match {
+        case Players.Waiting(_) => false
+        case Players.Full(player1, player2) => actingPlayer.id match {
+          case player1.id => isPlayer1Turn && moves > 0
+          case player2.id => !isPlayer1Turn && moves > 0
+          case _ => false
+        }
+      }
+
+      if (isValid) {
+        action match {
+          case InMessage.IndexedAction("fire", index) => fire(index)
+          case InMessage.IndexedAction("lock", index) => lockOn(index)
+          case InMessage.IndexedAction("call", index) => call(index)
+          case InMessage.Action("shutter") => shutter()
+          case InMessage.Action("next") => next()
+        }
+        moves -= 1
+      }
+
+      if (moves <= 0) {
+        isPlayer1Turn = !isPlayer1Turn
+        moves = 2
       }
     }
 

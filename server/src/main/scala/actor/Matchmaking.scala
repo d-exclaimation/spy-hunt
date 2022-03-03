@@ -11,6 +11,7 @@ import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.util.Timeout
+import model.protocol.InMessage
 import socket.Client
 
 import java.util.UUID
@@ -25,6 +26,8 @@ object Matchmaking {
 
     case class Quit(player: Client) extends Act
 
+    case class Incoming(player: Client, in: InMessage) extends Act
+
     case object Ignore extends Act
 
     case class Update(id: String, isAvailable: Boolean) extends Act
@@ -36,9 +39,12 @@ object Matchmaking {
     isAvailable: Boolean
   )
 
-  def apply(): Behavior[Act] = matchmaking(Map.empty)
+  def apply(): Behavior[Act] = matchmaking(Map.empty, Map.empty)
 
-  private def matchmaking(lobbies: Map[String, ActiveLobby]): Behavior[Act] = Behaviors.receive { (context, msg) =>
+  private def matchmaking(
+    lobbies: Map[String, ActiveLobby],
+    players: Map[String, String]
+  ): Behavior[Act] = Behaviors.receive { (context, msg) =>
     implicit val sys: ActorSystem[Nothing] = context.system
     implicit val timeout: Timeout = Timeout(5.seconds)
 
@@ -63,7 +69,8 @@ object Matchmaking {
 
             // Manual update will be confirmed with `Act.Update`
             matchmaking(
-              lobbies.updated(id, ActiveLobby(ref, isAvailable = true))
+              lobbies.updated(id, ActiveLobby(ref, isAvailable = true)),
+              players.updated(player.id, id)
             )
 
           case None =>
@@ -74,16 +81,33 @@ object Matchmaking {
 
             // Add this lobby
             matchmaking(
-              lobbies.updated(id, ActiveLobby(ref, isAvailable = true))
+              lobbies.updated(id, ActiveLobby(ref, isAvailable = true)),
+              players.updated(player.id, id)
             )
         }
 
+      case Act.Incoming(player, inMessage) =>
+        players
+          .get(player.id)
+          .flatMap(lobbies.get)
+          .foreach(_.ref ! Party.Act.Incoming(player, inMessage))
+        Behaviors.same
+
       case Act.Quit(player) =>
 
-        // Send a quit message all lobby
-        // TODO(Optimization): Save the player id to lobby id, to do in O(1) time
-        lobbies.values.foreach(_.ref ! Party.Act.Quit(player))
-        Behaviors.same
+        // Send a quit message the proper lobby
+        val newLobbies = players
+          .get(player.id)
+          .map{ id =>
+            lobbies.get(id).foreach(_.ref ! Party.Act.Quit(player))
+            lobbies.removed(id)
+          }
+          .getOrElse(lobbies)
+
+        matchmaking(
+          newLobbies,
+          players.removed(player.id)
+        )
 
       case Act.Update(id, isAvailable) =>
         matchmaking(
@@ -95,7 +119,8 @@ object Matchmaking {
             // If exist, update into lobbies
             .map(lobby => lobbies.updated(id, lobby))
             // else, just left lobbies unchanged
-            .getOrElse(lobbies)
+            .getOrElse(lobbies),
+          players,
         )
 
       case Act.Ignore =>
