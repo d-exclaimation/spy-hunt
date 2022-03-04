@@ -9,8 +9,7 @@ package actor
 
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
-import io.circe.generic.auto._
-import model.protocol.InMessage
+import model.protocol.{InMessage, OutMessage}
 import model.{Agent, Players, Window}
 import socket.Client
 
@@ -72,11 +71,6 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
         case Players.Waiting(player1) =>
           players = Players.Full(player1, player2)
 
-          players.sendJson(team =>
-            State(
-              queue.toSeq.map(_.perspective(team))
-            )
-          )
         case Players.Full(_, _) =>
           ()
       }
@@ -99,7 +93,18 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
           case InMessage.IndexedAction("call", index) => call(index)
           case InMessage.Action("shutter") => shutter()
           case InMessage.Action("next") => next()
+          case _ => ()
         }
+
+        players.sendJson[OutMessage] { team =>
+          OutMessage.Update(
+            state = state(team),
+            allies = allyCount(team),
+            foes = foeCount(team),
+            isTurn = if (team == Agent.PLAYER1) isPlayer1Turn else !isPlayer1Turn
+          )
+        }
+
         moves -= 1
       }
 
@@ -121,6 +126,17 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
         this
       }
   }
+
+  // MARK: - Computed State
+
+  private def state(team: Int): Seq[Window.WithAgent] =
+    windows.zip(queue).toSeq.map { case (w, a) => w.and(a.perspective(team)) }
+
+  private def allyCount(team: Int): Int =
+    (deck ++ queue).count(_.team == team)
+
+  private def foeCount(team: Int): Int =
+    (deck ++ queue).count(a => a.team != team && a.team != Agent.NEUTRAL)
 
   // MARK: - Actions
 
