@@ -86,6 +86,7 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
     }
 
     case Act.Incoming(actingPlayer, action) => same {
+      // # TODO: Not Tested
       val isValid = players match {
         case Players.Waiting(_) => false
         case Players.Full(player1, player2) => actingPlayer.id match {
