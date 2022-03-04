@@ -71,6 +71,15 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
         case Players.Waiting(player1) =>
           players = Players.Full(player1, player2)
 
+          players.sendJson[OutMessage] { team =>
+            OutMessage.Start(
+              state = state(team),
+              allies = allyCount(team),
+              foes = foeCount(team),
+              isTurn = if (team == Agent.PLAYER1) isPlayer1Turn else !isPlayer1Turn
+            )
+          }
+
         case Players.Full(_, _) =>
           ()
       }
@@ -120,6 +129,13 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
 
     case Act.Quit(player) =>
       if (players.all.exists(_.id == player.id)) {
+        players.sendJson[OutMessage] { team =>
+          OutMessage.End(
+            state = state(team),
+            win = true,
+            reason = "The other player quit the game",
+          )
+        }
         players.all.foreach(_.close())
         Behaviors.stopped
       } else {
