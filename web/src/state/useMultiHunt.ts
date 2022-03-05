@@ -9,6 +9,12 @@ import { InMessage, WindowWithAgent } from "../models/types";
 import { __WS__ } from "./../constant/env";
 import { OutMessage } from "./../models/types";
 
+const PLACEHOLDER: Record<number, string> = {
+  0: "forest",
+  1: "conglomerate",
+  2: "empl",
+};
+
 type HuntStates = {
   state: WindowWithAgent[];
   allies: number;
@@ -16,7 +22,13 @@ type HuntStates = {
   isTurn: boolean;
 };
 
+const changeTeam = (curr: HuntStates) => ({
+  ...curr,
+  state: curr.state.map((a) => ({ ...a, team: PLACEHOLDER[a.team] })),
+});
+
 function huntReducer(curr: HuntStates, action: InMessage): HuntStates {
+  console.log(action);
   switch (action.type) {
     case "update":
       return action.payload;
@@ -112,5 +124,5 @@ export function useMultiHunt() {
     };
   }, [onMessage]);
 
-  return { ...state, next, lockOn, fire, call, shutter };
+  return { ...changeTeam(state), next, lockOn, fire, call, shutter };
 }

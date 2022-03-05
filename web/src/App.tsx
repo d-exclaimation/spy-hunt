@@ -4,35 +4,23 @@ import Targets from "./components/Targets";
 import Uppers from "./components/Uppers";
 import WindowView from "./components/WindowView";
 import { ActionCard, ActiveAction, useAction } from "./state/useAction";
-import { useHunt } from "./state/useHunt";
+import { useMultiHunt } from "./state/useMultiHunt";
 import { match } from "./utils/match";
 
 const App: React.FC = () => {
-  const [isMyTurn, setTurn] = useState(true);
-  const [isEnemyDone, setEnemyDone] = useState(false);
   const { use, playerHand, refill } = useAction();
-  const { state, lockOn, fire, next, call, allies, foes, shutter, cpu } =
-    useHunt();
+  const { state, lockOn, fire, next, call, allies, foes, shutter, isTurn } =
+    useMultiHunt();
   const [currentAction, setAction] = useState<ActiveAction | null>(null);
 
   useEffect(() => {
     if (playerHand.length > 3) return;
-    setTurn(false);
-    cpu();
-    setTimeout(() => setEnemyDone(true), 1000);
-  }, [playerHand]);
-
-  useEffect(() => {
-    if (!isEnemyDone) return;
-    next();
     refill();
-    setTurn(true);
-    setEnemyDone(false);
-  }, [isEnemyDone]);
+  }, [playerHand]);
 
   const onClickWindow = useCallback(
     (i: number) => {
-      if (!currentAction || !isMyTurn) return;
+      if (!currentAction || !isTurn) return;
       const { type, index } = currentAction;
       match(type, {
         lock: () => lockOn(i),
@@ -44,18 +32,26 @@ const App: React.FC = () => {
       use(index);
       setAction(null);
     },
-    [setAction, currentAction, fire, call, lockOn, isMyTurn]
+    [setAction, currentAction, fire, call, lockOn, isTurn]
   );
 
   const action = useCallback(
     (index: number) => {
       return (type: ActionCard["type"], key: string) => {
-        if (!isMyTurn) return;
+        if (!isTurn) return;
         setAction({ type, key, index });
       };
     },
-    [next, shutter, setAction, isMyTurn]
+    [next, shutter, setAction, isTurn]
   );
+
+  if (state.length == 0) {
+    return (
+      <div className="flex items-center justify-center w-screen h-screen bg-blue-400 text-slate-800 font-mono text-lg">
+        Matchmaking...
+      </div>
+    );
+  }
 
   if (allies === 0) {
     return (
@@ -76,14 +72,14 @@ const App: React.FC = () => {
   return (
     <div
       className={`flex items-center justify-center w-screen h-screen ${
-        isMyTurn ? "bg-slate-800" : "bg-red-900"
+        isTurn ? "bg-slate-800" : "bg-red-900"
       }`}
     >
       <div className="absolute top-5 left-5 font-mono text-emerald-300">
         Allies: {allies}
       </div>
       <div className="absolute top-5 font-mono text-slate-200">
-        {isMyTurn ? "Your turn" : "Enemy turn"}
+        {isTurn ? "Your turn" : "Enemy turn"}
       </div>
       <div className="absolute top-5 right-5 font-mono text-red-300">
         Foes: {foes}
