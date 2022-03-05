@@ -46,11 +46,11 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
   private var players: Players = Players.Waiting(player1)
 
   private val deck: mutable.ArrayDeque[Agent] = {
-    val neutrals = (1 to 2)
+    val neutrals = (1 to 15)
       .map(_ => Agent.neutral())
-    val player1s = (1 to 2)
+    val player1s = (1 to 10)
       .map(_ => Agent.player1())
-    val player2s = (1 to 2)
+    val player2s = (1 to 10)
       .map(_ => Agent.player2())
 
     mutable.ArrayDeque.from(Random.shuffle(neutrals ++ player1s ++ player2s))
@@ -84,8 +84,6 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
               isTurn = if (team == Agent.PLAYER1) isPlayer1Turn else !isPlayer1Turn
             )
           }
-          logState()
-
         case Players.Full(_, _) =>
           ()
       }
@@ -104,8 +102,6 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
       if (isValid) {
         turn(action)
       }
-
-      logState()
     }
 
     case Act.Decided(winner) =>
@@ -161,10 +157,11 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
     val isDecided = p1 == 0 || p2 == 0
 
     players.sendJson[OutMessage] { team =>
+      val isMyTurn = (team == Agent.PLAYER1 && isPlayer1Turn) || (team == Agent.PLAYER2 && !isPlayer1Turn)
       OutMessage.Update(state(team),
         allies = if (team == Agent.PLAYER1) p1 else p2,
         foes = if (team == Agent.PLAYER1) p2 else p1,
-        isTurn = team == Agent.PLAYER1 && isPlayer1Turn && moves > 1
+        isTurn = isMyTurn && moves > 0
       )
     }
 
@@ -241,18 +238,6 @@ final class Party(context: ActorContext[Party.Act], player1: Client) extends Abs
   }
 
   // MARK: - Utils
-
-  private def logState(): Unit = {
-    val (p1, p2) = teamCount
-    println(s"------------------------------")
-    println(s"p1: $p1                p2: $p2")
-    println(s"------------------------------")
-    println(s"${queue.map(a => s" (${a.team}) ").mkString("-")}")
-    println(s"${windows.map(w => if (w.isTargeted) " [x] " else " [ ] ").mkString("-")}")
-    println(s"------------------------------")
-    println(s"${deck.map(a => s" (${a.team}) ").mkString("~")}")
-    println(s"------------------------------")
-  }
 
   private def same(on: => Unit): Party = {
     on
